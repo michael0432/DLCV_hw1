@@ -6,8 +6,10 @@ import random
 from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import normalize
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
+from scipy.spatial import distance
 
 img_dir = "../p3_data/"
 out_dir = "../p3_out/"
@@ -37,6 +39,13 @@ def read_data(category):
 def plot_data(ax,data,r,color):
     ax.scatter(data[r][0],data[r][1],data[r][2], c=color, marker='o', alpha=0.2)
 
+
+def plot_hist_data(bow,index):
+    fig, ax=plt.subplots()
+    for i in range(15):
+        ax.bar(i,bow[index][i],color='b')
+    plt.savefig(out_dir+'p3_result'+str(index)+'.png')
+
 if __name__ == '__main__':
 
     X_origin = np.empty((2000,64,64,3),dtype = np.uint8)
@@ -59,33 +68,51 @@ if __name__ == '__main__':
 
     ## problem2
 
-    X_train = X_train.reshape(1500*16,16*16*3)
-    X_test = X_test.reshape(500*16,16*16*3)
-    pca=PCA(n_components=3)
-    X_train_3dim = pca.fit_transform(X_train)
-    kmeans = KMeans(n_clusters=15, random_state=0, max_iter=5000)
-    kmeans.fit(X_train)
+    # X_train = X_train.reshape(1500*16,16*16*3)
+    # X_test = X_test.reshape(500*16,16*16*3)
+
+    # pca=PCA(n_components=3)
+    # X_train_3dim = pca.fit_transform(X_train)
+    # kmeans = KMeans(n_clusters=15, random_state=0, max_iter=5000)
+    # kmeans.fit(X_train)
 
     ## problem2 plot
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    for i in range(24000):
-        if kmeans.labels_[i] == 1:
-            plot_data(ax,X_train_3dim,i,'r')
-        elif kmeans.labels_[i] == 3:
-            plot_data(ax,X_train_3dim,i,'b')
-        elif kmeans.labels_[i] == 5:
-            plot_data(ax,X_train_3dim,i,'g')
-        elif kmeans.labels_[i] == 10:
-            plot_data(ax,X_train_3dim,i,'c')
-        elif kmeans.labels_[i] == 13:
-            plot_data(ax,X_train_3dim,i,'y')
-        elif kmeans.labels_[i] == 14:
-            plot_data(ax,X_train_3dim,i,'k')
-    plt.savefig(out_dir+'p2_result.png')
-    kmeans.score(X_test)
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111, projection='3d')
+    # for i in range(24000):
+    #     if kmeans.labels_[i] == 1:
+    #         plot_data(ax,X_train_3dim,i,'r')
+    #     elif kmeans.labels_[i] == 3:
+    #         plot_data(ax,X_train_3dim,i,'b')
+    #     elif kmeans.labels_[i] == 5:
+    #         plot_data(ax,X_train_3dim,i,'g')
+    #     elif kmeans.labels_[i] == 10:
+    #         plot_data(ax,X_train_3dim,i,'c')
+    #     elif kmeans.labels_[i] == 13:
+    #         plot_data(ax,X_train_3dim,i,'y')
+    #     elif kmeans.labels_[i] == 14:
+    #         plot_data(ax,X_train_3dim,i,'k')
+    # plt.savefig(out_dir+'p2_result.png')
 
     ## problem3
-            
+    X_train_orign = X_origin[0:1500].reshape(1500,64*64*3)
+    kmeans = KMeans(n_clusters=15, random_state=0, max_iter=5000)
+    kmeans.fit(X_train_orign)
+    bow = np.empty((1500,15), dtype = np.float32)
+    # print(kmeans.cluster_centers_.shape)
+    for i in range(1500):
+        for j in range(15):
+            bow[i][j] = distance.euclidean(X_train_orign[i],kmeans.cluster_centers_[j])
+        bow[i] = np.reciprocal(bow[i])
+        bow[i] = bow[i]/bow[i].sum(axis=0,keepdims=1)
+
+    # plt problem3
+    for i in [100,600,1000,1300]:
+        plot_hist_data(bow,i)
+
+
+    
+
+
 
